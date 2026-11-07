@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Hospital Management</title>
+    <meta charset="UTF-8">
+    <style>
+        body { font-family: Arial; margin: 40px; background: #f0f4f8; }
+        h1 { color: #1a5276; }
+        .menu { margin-top: 30px; }
+        .menu a {
+            display: inline-block;
+            margin: 10px;
+            padding: 12px 25px;
+            background: #2874a6;
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+        }
+        .menu a:hover { background: #1a5276; }
+    </style>
+</head>
+<body>
+    <h1>Hospital Management System</h1>
+    <p>Hệ thống quản lý bệnh viện sử dụng Linked List + Queue + BST + Stack</p>
+
+    <div class="menu">
+        <a href="addPatient.jsp">Thêm bệnh nhân vào hàng chờ</a>
+        <a href="CallNextController">Gọi bệnh nhân tiếp theo</a>
+        <a href="ListPatientController?type=waiting">Xem hàng chờ</a>
+        <a href="ListPatientController?type=admitted">Xem bệnh nhân đang điều trị</a>
+        <a href="ListPatientController?type=all">Xem tất cả (BST)</a>
+        <a href="search.jsp">Tìm kiếm theo ID</a>
+    </div>
+</body>
+</html>
