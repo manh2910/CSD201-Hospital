@@ -1,0 +1,38 @@
+<%@page contentType="text/html" pageEncoding="UTF-8"%>
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Đăng nhập — Hospital Management</title>
+    <link rel="stylesheet" href="common.css">
+</head>
+<body>
+<div class="login-page">
+    <div class="login-card">
+        <div class="brand">
+            <div class="brand-mark">H</div>
+            <h1>Hospital System</h1>
+        </div>
+        <p class="sub">Đăng nhập để quản lý bệnh nhân</p>
+
+        <% String error = (String) request.getAttribute("error");
+           if (error != null) { %>
+            <div class="alert alert-error"><%= error %></div>
+        <% } %>
+
+        <form action="LoginController" method="post">
+            <div class="form-group" style="margin-bottom:14px;">
+                <label>Tên đăng nhập</label>
+                <input type="text" name="username" required placeholder="admin" value="admin" autocomplete="username">
+            </div>
+            <div class="form-group" style="margin-bottom:20px;">
+                <label>Mật khẩu</label>
+                <input type="password" name="password" required placeholder="••••••••" autocomplete="current-password">
+            </div>
+            <button type="submit" class="btn btn-primary btn-block btn-lg">Đăng nhập</button>
+        </form>
+    </div>
+</div>
+</body>
+</html>

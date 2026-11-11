@@ -1,24 +1,47 @@
 package service;
 
+import dao.PatientDAO;
 import ds.LinkedList;
 import ds.PatientBST;
 import ds.Queue;
 import ds.Stack;
 import dto.Patient;
+import java.util.List;
 
 public class HospitalService {
 
-    // Các cấu trúc dữ liệu chính
-    private LinkedList admittedList;     // Danh sách bệnh nhân đã nhập viện
-    private Queue waitingQueue;          // Hàng chờ khám
-    private PatientBST patientBST;       // Cây tìm kiếm theo ID
-    private Stack historyStack;          // Lịch sử thao tác (để Undo)
+    private LinkedList admittedList;     // Bệnh nhân đang điều trị
+    private Queue waitingQueue;          // Hàng chờ
+    private PatientBST patientBST;       // Cây tìm kiếm
+    private Stack historyStack;          // Lịch sử thao tác
+    private PatientDAO patientDAO;       // Làm việc với Database
 
     public HospitalService() {
         admittedList = new LinkedList();
         waitingQueue = new Queue();
         patientBST = new PatientBST();
         historyStack = new Stack();
+        patientDAO = new PatientDAO();
+
+        // Load dữ liệu từ Database khi khởi tạo
+        loadDataFromDatabase();
+    }
+
+    // ====================== LOAD DỮ LIỆU TỪ DATABASE ======================
+    private void loadDataFromDatabase() {
+        List<Patient> list = patientDAO.getAllPatients();
+
+        for (Patient p : list) {
+            // Thêm vào BST (tất cả bệnh nhân)
+            patientBST.insert(p);
+
+            if ("Waiting".equalsIgnoreCase(p.getStatus())) {
+                waitingQueue.enqueue(p);
+            } else if ("Admitted".equalsIgnoreCase(p.getStatus())) {
+                admittedList.addLast(p);
+            }
+        }
+        System.out.println(">>> Đã load " + list.size() + " bệnh nhân từ Database");
     }
 
     // ====================== THÊM BỆNH NHÂN VÀO HÀNG CHỜ ======================
@@ -27,39 +50,45 @@ public class HospitalService {
             return false;
         }
 
-        // Kiểm tra trùng ID trong BST
+        // Kiểm tra trùng ID
         if (patientBST.search(patient.getId()) != null) {
-            return false; // Đã tồn tại
-        }
-
-        // Kiểm tra trùng trong hàng chờ
-        if (waitingQueue.contains(patient.getId())) {
             return false;
         }
 
         patient.setStatus("Waiting");
+
+        // 1. Lưu vào Database trước
+        boolean saved = patientDAO.insert(patient);
+        if (!saved) {
+            return false;
+        }
+
+        // 2. Thêm vào cấu trúc dữ liệu trong bộ nhớ
         waitingQueue.enqueue(patient);
         patientBST.insert(patient);
-
-        // Lưu lịch sử
         historyStack.push(copyPatient(patient));
 
         return true;
     }
 
-    // ====================== CHO BỆNH NHÂN VÀO KHÁM (DEQUEUE) ======================
+    // ====================== GỌI BỆNH NHÂN TIẾP THEO ======================
     public Patient callNextPatient() {
         Patient patient = waitingQueue.dequeue();
-        if (patient != null) {
-            patient.setStatus("Admitted");
-            admittedList.addLast(patient);
+        if (patient == null) return null;
 
-            // Cập nhật lại trong BST
-            patientBST.delete(patient.getId());
-            patientBST.insert(patient);
+        patient.setStatus("Admitted");
 
-            historyStack.push(copyPatient(patient));
-        }
+        // Cập nhật Database
+        patientDAO.update(patient);
+
+        // Cập nhật cấu trúc dữ liệu
+        admittedList.addLast(patient);
+
+        // Cập nhật BST
+        patientBST.delete(patient.getId());
+        patientBST.insert(patient);
+
+        historyStack.push(copyPatient(patient));
         return patient;
     }
 
@@ -69,6 +98,11 @@ public class HospitalService {
         if (patient == null) return false;
 
         patient.setStatus("Discharged");
+
+        // Cập nhật Database
+        patientDAO.update(patient);
+
+        // Xóa khỏi danh sách đang điều trị + BST
         admittedList.removeById(id);
         patientBST.delete(id);
 
@@ -76,23 +110,26 @@ public class HospitalService {
         return true;
     }
 
-    // ====================== TÌM KIẾM THEO ID ======================
+    // ====================== TÌM KIẾM ======================
     public Patient searchById(String id) {
-        return patientBST.search(id);
+        // Ưu tiên tìm trong BST (nhanh)
+        Patient p = patientBST.search(id);
+        if (p != null) return p;
+
+        // Nếu không có thì tìm xuống Database (dự phòng)
+        return patientDAO.findById(id);
     }
 
     // ====================== CẬP NHẬT THÔNG TIN ======================
     public boolean updatePatient(Patient updated) {
         if (updated == null || updated.getId() == null) return false;
 
-        Patient existing = patientBST.search(updated.getId());
-        if (existing == null) return false;
+        boolean ok = patientDAO.update(updated);
+        if (!ok) return false;
 
-        // Cập nhật trong BST
+        // Cập nhật trong bộ nhớ
         patientBST.delete(updated.getId());
         patientBST.insert(updated);
-
-        // Cập nhật trong LinkedList nếu đang nằm viện
         admittedList.update(updated);
 
         historyStack.push(copyPatient(updated));
@@ -109,7 +146,7 @@ public class HospitalService {
     }
 
     public Patient[] getAllPatientsSorted() {
-        return patientBST.toArray(); // Đã sắp xếp theo ID
+        return patientBST.toArray();
     }
 
     public Patient[] getHistory() {
@@ -129,12 +166,12 @@ public class HospitalService {
         return patientBST.size();
     }
 
-    // ====================== UNDO (Lấy thao tác gần nhất) ======================
+    // ====================== UNDO ======================
     public Patient undoLastAction() {
         return historyStack.pop();
     }
 
-    // ====================== CLEAR TOÀN BỘ ======================
+    // ====================== CLEAR ======================
     public void clearAll() {
         admittedList.clear();
         waitingQueue.clear();
@@ -142,7 +179,7 @@ public class HospitalService {
         historyStack.clear();
     }
 
-    // Helper: copy object để lưu lịch sử
+    // Helper copy
     private Patient copyPatient(Patient p) {
         return new Patient(
                 p.getId(),
