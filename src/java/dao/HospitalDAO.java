@@ -22,7 +22,6 @@ public class HospitalDAO {
             } else if ("Admitted".equalsIgnoreCase(p.getStatus())) {
                 // Thêm thẳng vào danh sách đã nhập viện
                 service.getAdmittedList(); // chỉ để trigger
-                // Vì service không có hàm addAdmitted trực tiếp, mình sẽ xử lý đơn giản hơn ở Service sau nếu cần
             }
         }
     }

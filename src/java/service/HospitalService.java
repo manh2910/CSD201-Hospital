@@ -27,7 +27,7 @@ public class HospitalService {
         loadDataFromDatabase();
     }
 
-    // ====================== LOAD DỮ LIỆU TỪ DATABASE ======================
+    // LOAD DỮ LIỆU TỪ DATABASE 
     private void loadDataFromDatabase() {
         List<Patient> list = patientDAO.getAllPatients();
 
@@ -44,7 +44,7 @@ public class HospitalService {
         System.out.println(">>> Đã load " + list.size() + " bệnh nhân từ Database");
     }
 
-    // ====================== THÊM BỆNH NHÂN VÀO HÀNG CHỜ ======================
+    // THÊM BỆNH NHÂN VÀO HÀNG CHỜ
     public boolean addToWaitingQueue(Patient patient) {
         if (patient == null || patient.getId() == null || patient.getId().trim().isEmpty()) {
             return false;
@@ -71,7 +71,7 @@ public class HospitalService {
         return true;
     }
 
-    // ====================== GỌI BỆNH NHÂN TIẾP THEO ======================
+    // GỌI BỆNH NHÂN TIẾP THEO 
     public Patient callNextPatient() {
         Patient patient = waitingQueue.dequeue();
         if (patient == null) return null;
@@ -92,7 +92,7 @@ public class HospitalService {
         return patient;
     }
 
-    // ====================== XUẤT VIỆN ======================
+    // XUẤT VIỆN 
     public boolean dischargePatient(String id) {
         Patient patient = admittedList.findById(id);
         if (patient == null) return false;
@@ -110,7 +110,7 @@ public class HospitalService {
         return true;
     }
 
-    // ====================== TÌM KIẾM ======================
+    // TÌM KIẾM 
     public Patient searchById(String id) {
         // Ưu tiên tìm trong BST (nhanh)
         Patient p = patientBST.search(id);
@@ -120,7 +120,7 @@ public class HospitalService {
         return patientDAO.findById(id);
     }
 
-    // ====================== CẬP NHẬT THÔNG TIN ======================
+    // CẬP NHẬT THÔNG TIN 
     public boolean updatePatient(Patient updated) {
         if (updated == null || updated.getId() == null) return false;
 
@@ -136,7 +136,7 @@ public class HospitalService {
         return true;
     }
 
-    // ====================== LẤY DANH SÁCH ======================
+    // LẤY DANH SÁCH 
     public Patient[] getWaitingList() {
         return waitingQueue.toArray();
     }
@@ -153,7 +153,7 @@ public class HospitalService {
         return historyStack.toArray();
     }
 
-    // ====================== THỐNG KÊ ======================
+    // THỐNG KÊ
     public int getWaitingCount() {
         return waitingQueue.size();
     }
@@ -166,12 +166,12 @@ public class HospitalService {
         return patientBST.size();
     }
 
-    // ====================== UNDO ======================
+    // UNDO 
     public Patient undoLastAction() {
         return historyStack.pop();
     }
 
-    // ====================== CLEAR ======================
+    // CLEAR 
     public void clearAll() {
         admittedList.clear();
         waitingQueue.clear();
